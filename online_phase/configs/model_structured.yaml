@@ -1,0 +1,21 @@
+# ============================================================
+# Structured Model Configuration (Transformer + Neural HMM)
+# ============================================================
+# --- Transformer Backbone ---
+backbone_type: transformer
+d_model: 256
+nhead: 4
+num_layers: 2
+dim_feedforward: 256
+dropout: 0.3
+max_seq_len: 512
+
+# --- Emission Head ---
+temperature: 1.0
+learn_temperature: true
+
+# --- Neural HMM ---
+# OPTIMIZED BOUNDS: Stronger transitions for better phase persistence
+hmm_eta_min: 0.02            # Minimum self-loop exit rate (near-idle phases)
+hmm_eta_max: 0.40            # Maximum exit rate (boundary-triggered transition) - optimized for robotics
+hmm_rho: 0.001               # Floor probability for non-adjacent transitions

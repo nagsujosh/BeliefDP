@@ -1,0 +1,6 @@
+[submodule "beliefdp/offline/uvd"]
+	path = beliefdp/offline/uvd
+	url = https://github.com/zcczhang/UVD.git
+[submodule "external/r3m"]
+	path = external/r3m
+	url = https://github.com/facebookresearch/r3m.git

@@ -1,0 +1,132 @@
+# ============================================================
+# Structured Model — Training Configuration
+# ============================================================
+# Uses PhaseModelStructured + MultiTaskLossStructured.
+
+# --- Data ---
+segmentation_json: output/phase_segmentation.json
+embeddings_dir: output/embeddings
+hdf5_path: demo.hdf5
+camera_keys: [agentview_rgb]
+num_phases: 11
+
+# --- Labels ---
+sigma_b: 2.0
+include_tail_boundary: false
+tail_sigma: 2.0
+c_min: 0.3
+c_max: 1.0
+anchor_sigma: 6.0
+label_cache_dir: online_phase/cache/labels
+
+# --- Dataset ---
+window_size: 48
+stride: 4
+train_frac: 0.75
+val_frac: 0.15
+test_frac: 0.10
+split_seed: 42
+
+# --- Embedding normalization ---
+normalize_embeddings: true
+per_demo_normalize: true
+
+# --- Augmentation ---
+augmentation:
+  noise_std: 0.2
+  frame_mask_prob: 0.15
+
+# --- Model ---
+backbone_type: transformer
+input_dim: 2048
+d_model: 256
+model_config: online_phase/configs/model_structured.yaml
+
+# --- HMM transition bounds (gentler for stable training) ---
+hmm_eta_min: 0.01
+hmm_eta_max: 0.20
+hmm_rho: 0.001
+
+# --- Duration prior (HSMM-like, default OFF) ---
+# Modulates HMM self-transition probability based on elapsed time in phase.
+# Stats are estimated from training labels automatically.
+use_duration_prior: false     # Set true to enable
+duration_model: gaussian      # "gaussian" or "lognormal"
+duration_strength: 1.0        # Scaling factor (0 = off, 1.0 = moderate)
+duration_min_std: 5.0         # Min std to prevent duration collapse (frames)
+
+# --- Training ---
+epochs: 100
+batch_size: 32
+lr: 3.0e-4
+weight_decay: 0.05
+grad_clip_norm: 1.0
+scheduler: cosine
+num_workers: 4
+seed: 42
+early_stop_patience: 15
+
+# --- Loss weights (structured model) ---
+use_uncertainty_weighting: false
+
+# Emission head supervision (CE on raw logits)
+w_emission: 1.0
+
+# HMM belief supervision (CE on α_t)
+w_belief: 1.0
+
+# HMM observation NLL (forward algorithm)
+# After normalization fix, use moderate weight to enable HMM influence earlier
+# OPTIMIZED: 0.05 → 0.1 for stronger temporal coherence
+w_hmm: 0.1
+
+# HMM warm-up: ramp w_hmm from 0 → target over N epochs.
+# Lets emission head learn basic discrimination first.
+# OPTIMIZED: 20 → 5 epochs to enable HMM benefits sooner
+hmm_warmup_epochs: 5
+
+# Belief left-to-right regularizer
+# REDUCED from 0.1 → 0.05 to prevent over-regularization
+w_belief_ltr: 0.05
+
+# Progress loss (rank-heavy)
+# REDUCED from 1.0 → 0.7 to balance with belief/HMM supervision
+w_progress: 0.7
+progress_lambda_hub: 0.2
+progress_lambda_mono: 0.2
+progress_lambda_rank: 1.0
+
+# Boundary loss
+# OPTIMIZED: Increase pos_weight 6.0 → 12.0 for better transition detection
+w_boundary: 1.0
+boundary_pos_weight: 12.0
+boundary_sparsity_weight: 0.01
+
+# Consistency loss (on emission logits, not beliefs)
+# REDUCED from 0.2 → 0.1 to avoid fighting HMM constraints
+w_consistency: 0.1
+consistency_lambda_link: 1.0
+consistency_lambda_ltr: 0.5
+
+# Progress-phase consistency loss (novel contribution)
+# Enforces bidirectional coupling: progress ≈ phase/K
+# WEAK REGULARIZATION: Set to 0.05 to avoid over-constraining phase identity
+# Stronger coupling (>0.1) can suppress valid phase transitions
+w_prog_phase: 0.05
+
+# Progress-phase warmup: delay activation until emission head is stable
+prog_phase_warmup_epochs: 15
+
+# Monotonic phase ordering loss (soft structural prior)
+# Penalizes backward phase transitions using soft expected phase index
+# Complements HMM left-to-right constraint with gradient-based regularization
+w_monotonic: 0.05
+
+# Phase/emission head settings
+focal_gamma: 0.0
+label_smoothing_max: 0.15
+confidence_alpha: 0.3
+
+# --- Output ---
+output_dir: online_phase/runs/structured
+log_interval: 10

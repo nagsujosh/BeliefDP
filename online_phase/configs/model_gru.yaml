@@ -1,0 +1,9 @@
+# GRU backbone configuration
+backbone_type: gru
+d_model: 256
+num_layers: 2
+dropout: 0.1
+
+# Temperature scaling for phase logits
+temperature: 1.0
+learn_temperature: true

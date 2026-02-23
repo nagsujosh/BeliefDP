@@ -1,0 +1,40 @@
+name: beliefdp
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - pip:
+      # Core ML
+      - torch>=2.0,<2.1
+      - torchvision==0.15.2
+      - pytorch_lightning==2.0.0
+      # Numerics & science
+      - numpy==1.23.5
+      - scipy
+      - scikit-learn
+      - matplotlib
+      # UVD dependencies
+      - hydra-core==1.3.1
+      - einops==0.6.0
+      - wandb==0.14.0
+      - decord==0.6.0
+      - termcolor
+      - cython<3
+      # R3M dependencies
+      - gdown>=4.4.0
+      - omegaconf>=2.1.1
+      - pillow>=9.0.1
+      # Data handling
+      - h5py
+      - opencv-python
+      - imageio
+      - imageio-ffmpeg
+      # Utilities
+      - tqdm
+      - dm-tree
+      # Pin setuptools for UVD's pkg_resources usage
+      - setuptools<81

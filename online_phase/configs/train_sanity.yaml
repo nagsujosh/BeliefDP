@@ -1,0 +1,96 @@
+# ============================================================
+# Low-Regularization Sanity Check Configuration
+# ============================================================
+# Purpose: Test whether the model CAN fit the pseudo-labels.
+# If phase acc jumps and progress MAE drops, the baseline structured
+# config is underfitting. If it overfits quickly, the labels are learnable.
+
+# --- Data ---
+segmentation_json: output/phase_segmentation.json
+embeddings_dir: output/embeddings
+hdf5_path: demo.hdf5
+camera_keys: [agentview_rgb]
+num_phases: 11
+
+# --- Labels ---
+sigma_b: 2.0
+include_tail_boundary: false
+tail_sigma: 2.0
+c_min: 0.3
+c_max: 1.0
+anchor_sigma: 6.0
+label_cache_dir: online_phase/cache/labels
+
+# --- Dataset ---
+window_size: 48
+stride: 2               # Less aggressive stride
+train_frac: 0.75
+val_frac: 0.15
+test_frac: 0.10
+split_seed: 42
+
+# --- Embedding normalization ---
+normalize_embeddings: true
+per_demo_normalize: true     # Subtract per-demo mean
+
+# --- Augmentation (minimal) ---
+augmentation:
+  noise_std: 0.05
+  frame_mask_prob: 0.02
+
+# --- Model ---
+backbone_type: transformer
+input_dim: 2048
+d_model: 256
+model_config: online_phase/configs/model_structured.yaml
+
+# --- Training ---
+epochs: 200
+batch_size: 32
+lr: 3.0e-4
+weight_decay: 0.01       # Light weight decay
+grad_clip_norm: 1.0
+scheduler: cosine
+num_workers: 4
+seed: 42
+early_stop_patience: 30   # Long patience to let it train
+
+# --- Loss weights (structured model) ---
+use_uncertainty_weighting: false
+
+# Emission + belief supervision
+w_emission: 1.0
+w_belief: 1.0
+w_hmm: 0.05
+hmm_warmup_epochs: 2
+w_belief_ltr: 0.02
+
+# Shared heads
+w_progress: 1.0
+w_boundary: 1.0
+w_consistency: 0.2
+w_prog_phase: 0.0
+prog_phase_warmup_epochs: 0
+w_monotonic: 0.0
+
+# Phase loss
+focal_gamma: 0.0
+label_smoothing_max: 0.05
+confidence_alpha: 0.3
+
+# Progress loss (rank-heavy)
+progress_lambda_hub: 0.2
+progress_lambda_mono: 0.2
+progress_lambda_rank: 1.0
+
+# Boundary loss
+boundary_pos_weight: 6.0
+boundary_sparsity_weight: 0.01
+
+# Consistency loss
+consistency_lambda_link: 1.0
+consistency_lambda_ltr: 0.5
+
+# --- Output ---
+output_dir: online_phase/runs/sanity
+log_interval: 10

@@ -1,0 +1,12 @@
+# Transformer backbone — low-regularization sanity config
+backbone_type: transformer
+d_model: 256
+nhead: 4
+num_layers: 2
+dim_feedforward: 256
+dropout: 0.1             # Low dropout for overfit test
+max_seq_len: 512
+
+# Temperature scaling
+temperature: 1.0
+learn_temperature: true
